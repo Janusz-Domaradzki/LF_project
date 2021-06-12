@@ -66,12 +66,12 @@ static void MX_TIM3_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+/*void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim == &htim3) {
-		  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 25);
-		  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 34);
+		  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 25); //25
+		  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 34); //34
 	}
-}
+}*/
 
 /* USER CODE END 0 */
 
@@ -97,7 +97,27 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
+  int differential=0;
+  int PD_reg=0;
+  int base = 20;
+  int diff = 20;
 
+  int Motor_Left = base + diff;
+  int Motor_Right = base;
+
+  int weight[] = {-10, -7, -5, 5, 7, 10}; //Nie tak, ale na odwrót, bo CzujADC1 są z prawej strony!!!!!!!
+  int SensorSettings[6];
+
+
+  int Kp = 2;
+  int Kd = 1;
+  int err = 0;
+  int prev_err = 0;
+  int detections = 0;
+
+  int prog = 200;
+
+  uint8_t ADC_data[6];
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -109,8 +129,6 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
 
-  //HAL_ADC_Start_IT(&hadc1);
-  //HAL_ADC_Start_IT(&hadc2);
 
   HAL_ADC_Start_DMA(&hadc1, CzujADC1, 4);
   HAL_ADC_Start_DMA(&hadc2, CzujADC2, 2);
@@ -120,9 +138,11 @@ int main(void)
 
   HAL_GPIO_WritePin(STBY_GPIO_Port, STBY_Pin, GPIO_PIN_SET);
 
+  //lewy silnik
   HAL_GPIO_WritePin(AIN1_GPIO_Port, AIN1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(AIN2_GPIO_Port, AIN2_Pin, GPIO_PIN_RESET);
 
+  //prawy silnik
   HAL_GPIO_WritePin(BIN1_GPIO_Port, BIN1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_RESET);
   /* USER CODE END 2 */
@@ -131,16 +151,74 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+
+
+	  for(int i = 0; i<4; i++)
+	  {
+		  ADC_data[i] = CzujADC1[i];
+	  }
+
+	  for(int i = 4; i<6; i++)
+	  {
+	  	  ADC_data[i] = CzujADC2[i];
+	  }
+
+	  for(int i = 0; i<6; i++)
+	  {
+		  if(ADC_data[i] > prog)
+		  {
+			  SensorSettings[i] = 1;
+		  }
+		  else
+		  {
+			  SensorSettings[i] = 0;
+		  }
+
+
+	  }
+
+	  for(int j = 0; j<6; j++)
+	  {
+		  err += SensorSettings[j]*weight[j];
+		  detections += SensorSettings[j];
+	  }
+
+	  if(detections != 0)
+	  {
+		  err /= detections;
+		  prev_err = err;
+	  }
+	  else
+	  {
+		  if(prev_err < -4)
+		  {
+			  err = -7;
+		  }
+		  else if(prev_err > 4)
+		  {
+		  	  err = 7;
+		  }
+		  else err = 0;
+	  }
+
+	  differential = err - prev_err;
+	  prev_err = err;
+	  PD_reg = Kp*err + Kd*differential;
+
 	  //Prawy silnik
+	  	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, Motor_Right+PD_reg); //12
+	  	  //Lewy silnik
+	  	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, Motor_Left-PD_reg); //40
+	  err = 0;
+	  detections = 0;
+	  HAL_Delay(3);
 
-	  //Lewy silnik
-
-	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 25);
-	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, 34);
 
 	  HAL_ADC_Start_DMA(&hadc1, CzujADC1, 4);
 	  HAL_ADC_Start_DMA(&hadc2, CzujADC2, 2);
-	  HAL_Delay(3);
+
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
