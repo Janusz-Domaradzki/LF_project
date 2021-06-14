@@ -99,13 +99,13 @@ int main(void)
   /* USER CODE BEGIN SysInit */
   int differential=0;
   int PD_reg=0;
-  int base = 20;
+  int base = 15;
   int diff = 20;
 
   int Motor_Left = base + diff;
   int Motor_Right = base;
 
-  int weight[] = {-10, -7, -5, 5, 7, 10}; //Nie tak, ale na odwrót, bo CzujADC1 są z prawej strony!!!!!!!
+  int weight[] = {0, 14, 8, -8, -14, 0};
   int SensorSettings[6];
 
 
@@ -115,7 +115,7 @@ int main(void)
   int prev_err = 0;
   int detections = 0;
 
-  int prog = 200;
+  int prog = 160;
 
   uint8_t ADC_data[6];
   /* USER CODE END SysInit */
@@ -191,13 +191,13 @@ int main(void)
 	  }
 	  else
 	  {
-		  if(prev_err < -4)
+		  if(prev_err < -8)
 		  {
-			  err = -7;
+			  err = -13;
 		  }
-		  else if(prev_err > 4)
+		  else if(prev_err > 8)
 		  {
-		  	  err = 7;
+		  	  err = 13;
 		  }
 		  else err = 0;
 	  }
@@ -206,13 +206,15 @@ int main(void)
 	  prev_err = err;
 	  PD_reg = Kp*err + Kd*differential;
 
+	  //Lewy silnik
+
+	   __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, Motor_Left+PD_reg);
 	  //Prawy silnik
-	  	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, Motor_Right+PD_reg); //12
-	  	  //Lewy silnik
-	  	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, Motor_Left-PD_reg); //40
+
+	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, Motor_Right-PD_reg);
 	  err = 0;
 	  detections = 0;
-	  HAL_Delay(3);
+	  HAL_Delay(50);
 
 
 	  HAL_ADC_Start_DMA(&hadc1, CzujADC1, 4);
