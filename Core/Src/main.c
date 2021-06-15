@@ -99,13 +99,13 @@ int main(void)
   /* USER CODE BEGIN SysInit */
   int differential=0;
   int PD_reg=0;
-  int base = 15;
+  int base = 30;
   int diff = 20;
 
   int Motor_Left = base + diff;
   int Motor_Right = base;
 
-  int weight[] = {0, 14, 8, -8, -14, 0};
+  int weight[] = {0, 14, 7, -7, -14, 0};
   int SensorSettings[6];
 
 
@@ -115,7 +115,7 @@ int main(void)
   int prev_err = 0;
   int detections = 0;
 
-  int prog = 160;
+  int prog = 180;
 
   uint8_t ADC_data[6];
   /* USER CODE END SysInit */
@@ -138,11 +138,10 @@ int main(void)
 
   HAL_GPIO_WritePin(STBY_GPIO_Port, STBY_Pin, GPIO_PIN_SET);
 
-  //lewy silnik
+  //lewy silnik - jazda na przód
   HAL_GPIO_WritePin(AIN1_GPIO_Port, AIN1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(AIN2_GPIO_Port, AIN2_Pin, GPIO_PIN_RESET);
-
-  //prawy silnik
+  //prawy silnik - jazda na przód
   HAL_GPIO_WritePin(BIN1_GPIO_Port, BIN1_Pin, GPIO_PIN_SET);
   HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_RESET);
   /* USER CODE END 2 */
@@ -153,8 +152,7 @@ int main(void)
   {
 
 
-
-	  for(int i = 0; i<4; i++)
+	/*  for(int i = 0; i<4; i++)
 	  {
 		  ADC_data[i] = CzujADC1[i];
 	  }
@@ -213,9 +211,85 @@ int main(void)
 
 	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, Motor_Right-PD_reg);
 	  err = 0;
-	  detections = 0;
-	  HAL_Delay(50);
+	  detections = 0;*/
+	  if(CzujADC1[0] > prog)
+	  {
+		  //lewy silnik - jazda na przód
+		  HAL_GPIO_WritePin(AIN1_GPIO_Port, AIN1_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(AIN2_GPIO_Port, AIN2_Pin, GPIO_PIN_RESET);
+		  //prawy silnik - jazda na przód
+		  HAL_GPIO_WritePin(BIN1_GPIO_Port, BIN1_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_SET);
 
+		  err = 30;
+	  }
+	  else if(CzujADC1[1] > prog)
+	  {
+		  //lewy silnik - jazda na przód
+		  HAL_GPIO_WritePin(AIN1_GPIO_Port, AIN1_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(AIN2_GPIO_Port, AIN2_Pin, GPIO_PIN_RESET);
+		  //prawy silnik - jazda na przód
+		  HAL_GPIO_WritePin(BIN1_GPIO_Port, BIN1_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_SET);
+		  err = 15;
+	  }
+	  else if(CzujADC1[2] > prog)
+	  {
+		  //lewy silnik - jazda na przód
+		  		  HAL_GPIO_WritePin(AIN1_GPIO_Port, AIN1_Pin, GPIO_PIN_SET);
+		  		  HAL_GPIO_WritePin(AIN2_GPIO_Port, AIN2_Pin, GPIO_PIN_RESET);
+		  		  //prawy silnik - jazda na przód
+				  HAL_GPIO_WritePin(BIN1_GPIO_Port, BIN1_Pin, GPIO_PIN_RESET);
+				  HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_SET);
+				  err = 5;
+	  }
+	  else if(CzujADC1[3] > prog)
+	  {
+		  HAL_GPIO_WritePin(AIN1_GPIO_Port, AIN1_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(AIN2_GPIO_Port, AIN2_Pin, GPIO_PIN_SET);
+		  //prawy silnik - jazda na przód
+		  HAL_GPIO_WritePin(BIN1_GPIO_Port, BIN1_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_RESET);
+		  err = 5;
+	  }
+	  else if(CzujADC2[0] > prog)
+	  {
+		  HAL_GPIO_WritePin(AIN1_GPIO_Port, AIN1_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(AIN2_GPIO_Port, AIN2_Pin, GPIO_PIN_SET);
+		  //prawy silnik - jazda na przód
+		  HAL_GPIO_WritePin(BIN1_GPIO_Port, BIN1_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_RESET);
+		  err = 15;
+	  }
+	  else if(CzujADC2[1] > prog)
+	  {
+		  HAL_GPIO_WritePin(AIN1_GPIO_Port, AIN1_Pin, GPIO_PIN_RESET);
+		  HAL_GPIO_WritePin(AIN2_GPIO_Port, AIN2_Pin, GPIO_PIN_SET);
+		  //prawy silnik - jazda na przód
+		  HAL_GPIO_WritePin(BIN1_GPIO_Port, BIN1_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_RESET);
+		  err = 30;
+	  }
+	  else
+	  {
+		  //lewy silnik - jazda na przód
+		  HAL_GPIO_WritePin(AIN1_GPIO_Port, AIN1_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(AIN2_GPIO_Port, AIN2_Pin, GPIO_PIN_RESET);
+		  //prawy silnik - jazda na przód
+		  HAL_GPIO_WritePin(BIN1_GPIO_Port, BIN1_Pin, GPIO_PIN_SET);
+		  HAL_GPIO_WritePin(BIN2_GPIO_Port, BIN2_Pin, GPIO_PIN_RESET);
+		  err = 0;
+	  }
+
+
+
+	  //Lewy silnik
+	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_2, Motor_Left+err);
+
+	  //Prawy silnik
+	  __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, Motor_Right+err);
+	  err = 0;
+	  HAL_Delay(50);
 
 	  HAL_ADC_Start_DMA(&hadc1, CzujADC1, 4);
 	  HAL_ADC_Start_DMA(&hadc2, CzujADC2, 2);
